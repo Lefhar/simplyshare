@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion réussie{% endblock %}
+
+{% block body %}
+    <h1>Connexion Facebook réussie</h1>
+    <p>Votre compte Facebook a été connecté avec succès et les informations ont été enregistrées en base.</p>
+    <p><strong>ID Facebook :</strong> {{ facebookId }}</p>
+    <h2>Données des pages administrées :</h2>
+    <pre>{{ pages|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+{% endblock %}
