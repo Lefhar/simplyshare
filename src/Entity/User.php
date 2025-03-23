@@ -1,15 +1,15 @@
 <?php
-// src/Entity/User.php
+
 namespace App\Entity;
 
 use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -26,13 +26,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type:"string")]
     private ?string $password = null;
 
-    #[ORM\OneToMany(mappedBy: 'user', targetEntity: RssFeed::class, orphanRemoval: true)]
-    private Collection $rssFeeds;
-
-    public function __construct()
-    {
-        $this->rssFeeds = new ArrayCollection();
-    }
+    #[ORM\Column(type: 'boolean')]
+    private $isVerified = false;
 
     public function getId(): ?int
     {
@@ -55,18 +50,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return (string)$this->email;
     }
 
-    // Pour compatibilité si nécessaire
+    // Pour compatibilité avec d'anciennes versions (getUsername)
     public function getUsername(): string
     {
-        return (string)$this->email;
+        return $this->getUserIdentifier();
+    }
+
+    public function getSalt(): ?string
+    {
+        // Bcrypt et sodium n'utilisent pas de sel externe
+        return null;
     }
 
     public function getRoles(): array
     {
         $roles = $this->roles;
-        if (empty($roles)) {
-            $roles[] = 'ROLE_USER';
-        }
+        // Garantir que l'utilisateur possède au moins ROLE_USER
+        $roles[] = 'ROLE_USER';
         return array_unique($roles);
     }
 
@@ -78,7 +78,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getPassword(): string
     {
-        return (string)$this->password;
+        return $this->password;
     }
 
     public function setPassword(string $password): self
@@ -87,41 +87,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
-        // Nettoyer les données sensibles temporaires si nécessaire
+        // Supprimer les données sensibles temporaires si nécessaire
     }
 
-    /**
-     * @return Collection<int, RssFeed>
-     */
-    public function getRssFeeds(): Collection
+    public function isVerified(): bool
     {
-        return $this->rssFeeds;
+        return $this->isVerified;
     }
 
-    public function addRssFeed(RssFeed $rssFeed): self
+    public function setIsVerified(bool $isVerified): self
     {
-        if (!$this->rssFeeds->contains($rssFeed)) {
-            $this->rssFeeds[] = $rssFeed;
-            $rssFeed->setUser($this);
-        }
+        $this->isVerified = $isVerified;
+
         return $this;
-    }
-
-    public function removeRssFeed(RssFeed $rssFeed): self
-    {
-        if ($this->rssFeeds->removeElement($rssFeed)) {
-            // set the owning side to null (unless already changed)
-            if ($rssFeed->getUser() === $this) {
-                $rssFeed->setUser(null);
-            }
-        }
-        return $this;
-    }
-
-    public function getSalt()
-    {
-        // TODO: Implement getSalt() method.
     }
 }
