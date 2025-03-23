@@ -7,17 +7,15 @@ use Doctrine\ORM\EntityManagerInterface;
 use Facebook\Facebook;
 use KnpU\OAuth2ClientBundle\Client\ClientRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class FacebookController extends AbstractController
 {
-    /**
-     * Redirige l'utilisateur vers Facebook pour l'authentification.
-     *
-     * @Route("/connect/facebook", name="connect_facebook_start")
-     */
-    public function connectFacebook(ClientRegistry $clientRegistry)
+    #[Route('/connect/facebook', name: 'connect_facebook_start')]
+    public function connectFacebook(ClientRegistry $clientRegistry): RedirectResponse
     {
         // Demande les permissions nécessaires
         return $clientRegistry->getClient('facebook')->redirect(
@@ -26,13 +24,12 @@ class FacebookController extends AbstractController
         );
     }
 
-    /**
-     * Traite le callback après authentification Facebook et enregistre les informations en base.
-     *
-     * @Route("/connect/facebook/check", name="connect_facebook_check")
-     */
-    public function connectFacebookCheck(Request $request, ClientRegistry $clientRegistry, EntityManagerInterface $em)
-    {
+    #[Route('/connect/facebook/check', name: 'connect_facebook_check')]
+    public function connectFacebookCheck(
+        Request $request,
+        ClientRegistry $clientRegistry,
+        EntityManagerInterface $em
+    ): Response {
         // Récupération du token utilisateur via le client OAuth2
         $client = $clientRegistry->getClient('facebook');
         $accessTokenObject = $client->getAccessToken();
@@ -74,7 +71,7 @@ class FacebookController extends AbstractController
         $em->persist($fbAccount);
         $em->flush();
 
-        // Affiche un message de succès sans exposer le token
+        // Affiche un message de succès (sans exposer le token)
         return $this->render('facebook/success.html.twig', [
             'facebookId' => $facebookId,
             'pages'      => $pages,

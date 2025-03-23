@@ -1,0 +1,22 @@
+{# templates/rss_feed/list.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes flux RSS{% endblock %}
+
+{% block body %}
+    <h1>Mes flux RSS</h1>
+    {% if rssFeeds is empty %}
+        <p>Vous n'avez ajouté aucun flux RSS pour le moment.</p>
+    {% else %}
+        <ul>
+            {% for feed in rssFeeds %}
+                <li>
+                    <strong>{{ feed.url }}</strong>
+                    {% if feed.title is not empty %}
+                        - {{ feed.title }}
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}
